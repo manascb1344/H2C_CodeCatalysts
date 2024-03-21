@@ -26,3 +26,4 @@ dist-ssr
 **.ipynb_checkpoints
 **.zip
 **node_modules
+**package-lock.json
