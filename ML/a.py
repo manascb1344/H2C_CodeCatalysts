@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 
-df = pd.read_csv("dff.csv")
+df = pd.read_csv("HI-Small_Trans.csv")
 
 app = Flask(__name__)
 
@@ -24,16 +24,8 @@ def get_transactions():
             print("Error: Please provide account_number parameter")  
             return jsonify({'error': 'Please provide account_number parameter'}), 400
     
-    transactions_from_account = []
-    transactions_to_account = []
-    
-    for index, row in df.iterrows():
-        if row['Account'] == account_number:
-            transactions_from_account.append(row.to_dict())
-        if row['Account.1'] == account_number:
-            transactions_to_account.append(row.to_dict())
-            
-		
+    transactions_from_account = df[df['Account'] == account_number].to_dict('records')
+    transactions_to_account = df[df['Account.1'] == account_number].to_dict('records')
     
     print("Sending response...")  
     return jsonify({'transactions_from_account': transactions_from_account, 'transactions_to_account': transactions_to_account})
