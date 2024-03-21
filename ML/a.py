@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 
-df = pd.read_csv("HI-Small_Trans.csv")
+df = pd.read_csv("./HI-Small_Trans.csv")
 
 app = Flask(__name__)
 
