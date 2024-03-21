@@ -25,3 +25,4 @@ dist-ssr
 **.csv
 **.ipynb_checkpoints
 **.zip
+**node_modules
