@@ -5,12 +5,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Graph from "./Graph.jsx";
 import Dash from "./Dash.jsx";
 import TP from "./TP.jsx";
+import TransactionAnalysis from "./TransactionAnalysis.jsx";
 
 function App() {
 	return (
 		<BrowserRouter>
 			<div className="side-nav">
-				<SideNav />	
+				<SideNav />
 			</div>
 			<div className="content">
 				<div className="p-4 sm:ml-64">
@@ -20,6 +21,7 @@ function App() {
 								<Route path="/graph" element={<Graph />} />
 								<Route path="/dashboard" element={<Dash />} />
 								<Route path="/tp" element={<TP />} />
+								<Route path="/transaction-analysis" element={<TransactionAnalysis />} />
 							</Routes>
 						</div>
 					</div>
