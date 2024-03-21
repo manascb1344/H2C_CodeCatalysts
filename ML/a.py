@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import pandas as pd
 
 df = pd.read_csv("./HI-Small_Trans.csv")
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/transactions', methods=['GET', 'POST'])
 def get_transactions():
