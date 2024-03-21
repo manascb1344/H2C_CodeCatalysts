@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
-import 'reactflow/dist/style.css'
+import 'reactflow/dist/style.css';
 
 const AccountNode = memo(({ data, isConnectable }) => {
   return (
-    <>
+    <div className="border border-gray-500 rounded-lg p-2">
       <Handle
         type="target"
         position={Position.Left}
@@ -21,7 +21,7 @@ const AccountNode = memo(({ data, isConnectable }) => {
         style={{ top: '50%', transform: 'translateY(-50%)', background: '#555' }}
         isConnectable={isConnectable}
       />
-    </>
+    </div>
   );
 });
 
