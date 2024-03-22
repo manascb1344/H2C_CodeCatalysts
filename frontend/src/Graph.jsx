@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import ReactFlow, { useNodesState, useEdgesState, addEdge, MiniMap, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
 import AccountNode from './Accountode';
+import CustomEdge from './CustomEdge'; // Adjust the path as per your file structure
+
 
 const Graph = () => {
     const [accountNumber, setAccountNumber] = useState('');
@@ -65,26 +67,37 @@ const Graph = () => {
 
             // Prepare edges
             const edgesData = [];
+            const existingEdges = new Set(); // To track existing edges
             const extractEdges = (transactions) => {
                 transactions.forEach((transaction, i) => {
                     if (transaction.Account && transaction['Account.1']) {
-                        edgesData.push({
-                            id: `edge-${i}`,
-                            source: transaction.Account,
-                            target: transaction['Account.1'],
-                            type: 'bezier',
-                            animated: true,
-                        });
+                        const edgeId = `${transaction.Account}-${transaction['Account.1']}`;
+                        console.log(`${transactions}`);
+                        if (!existingEdges.has(edgeId)) {
+                            const edgeColor = transaction['Is Laundering'] === 0 ? 'green' : 'red';
+                            edgesData.push({
+                                id: edgeId,
+                                source: transaction.Account,
+                                target: transaction['Account.1'],
+                                label: transaction[2],
+                                type: 'bezier',
+                                animated: true,
+                                style: { stroke: edgeColor },
+                            });
+                            existingEdges.add(edgeId);
+                        }
                     }
                 });
             };
+            
+
             extractEdges(responseData.transactions_from_account);
             extractEdges(responseData.transactions_to_account);
 
             setNodes(initialNodes);
             setEdges(edgesData);
+            console.log(edgesData)
             setShowCanvas(true);
-
         } catch (error) {
             console.error('Error fetching data:', error);
             setNodes([]);
@@ -92,14 +105,21 @@ const Graph = () => {
         }
     }, [accountNumber]);
 
-
-
     const onConnect = useCallback(
-        (params) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#fff' } }, eds)),
-        []
+        (params) => {
+            const edgeId = `${params.source}-${params.target}`;
+            if (!edges.find((edge) => edge.id === edgeId)) {
+                setEdges((eds) => addEdge({ ...params, id: edgeId, animated: true }, eds));
+            }
+        },
+        [edges]
     );
 
     const nodeTypes = { accountNode: AccountNode };
+
+    const edgeTypes = {
+        custom: CustomEdge,
+    };
 
     return (
         <div className="h-[100vh] w-full flex items-center justify-center">
@@ -110,9 +130,8 @@ const Graph = () => {
                         className="border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring focus:border-blue-500 mb-4"
                         placeholder="Enter account number"
                         value={accountNumber}
-                        onChange={handleAccountNumberChange} 
+                        onChange={handleAccountNumberChange}
                     />
-
                     <button
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                         onClick={fetchData}
@@ -128,7 +147,7 @@ const Graph = () => {
                     onEdgesChange={onEdgesChange}
                     onConnect={onConnect}
                     nodeTypes={nodeTypes}
-                    connectionLineStyle={{ stroke: '#fff' }}
+                    edgeTypes={edgeTypes}
                     snapToGrid
                     snapGrid={[20, 20]}
                     defaultViewport={{ x: 0, y: 0, zoom: 1.5 }}

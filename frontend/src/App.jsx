@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Graph from "./Graph.jsx";
 import Dash from "./Dash.jsx";
 import TP from "./TP.jsx";
+import TradingViewWidget from "./Chart.jsx"
 
 function App() {
 	return (
@@ -20,6 +21,7 @@ function App() {
 								<Route path="/graph" element={<Graph />} />
 								<Route path="/dashboard" element={<Dash />} />
 								<Route path="/tp" element={<TP />} />
+								<Route path="/charts" element={<TradingViewWidget />} />
 							</Routes>
 						</div>
 					</div>
