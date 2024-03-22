@@ -96,7 +96,6 @@ const Graph = () => {
 
             setNodes(initialNodes);
             setEdges(edgesData);
-            console.log(edgesData)
             setShowCanvas(true);
         } catch (error) {
             console.error('Error fetching data:', error);
