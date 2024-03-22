@@ -79,12 +79,16 @@ const Graph = () => {
                                 id: edgeId,
                                 source: transaction.Account,
                                 target: transaction['Account.1'],
-                                label: transaction[2],
+                                label: transaction["Amount Paid"],
                                 type: 'bezier',
                                 animated: true,
-                                style: { stroke: edgeColor },
-                            });
-                            existingEdges.add(edgeId);
+                                style: {
+                                  stroke: edgeColor,
+                                  fontSize: '16px', 
+                                  lineHeight: '1.5', 
+                                },
+                              });
+                              existingEdges.add(edgeId);
                         }
                     }
                 });

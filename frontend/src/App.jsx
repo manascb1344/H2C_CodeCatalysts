@@ -6,6 +6,7 @@ import Graph from "./Graph.jsx";
 import Dash from "./Dash.jsx";
 import TP from "./TP.jsx";
 import TradingViewWidget from "./Chart.jsx"
+import CryptoNewsComponent from "./CryptoNews.jsx";
 
 function App() {
 	return (
@@ -22,6 +23,7 @@ function App() {
 								<Route path="/dashboard" element={<Dash />} />
 								<Route path="/tp" element={<TP />} />
 								<Route path="/charts" element={<TradingViewWidget />} />
+								<Route path="/news" element={<CryptoNewsComponent />} />
 							</Routes>
 						</div>
 					</div>
