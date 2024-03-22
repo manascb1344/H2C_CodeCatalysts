@@ -190,7 +190,7 @@ class MetricManager(object):
 
     return best_results
 
-args={"epochs":10,
+args={"epochs":100,
       'lr':0.01,
       'weight_decay':1e-5,
       'prebuild':True,
@@ -214,14 +214,14 @@ model = GATv2(data_train.num_node_features, args['hidden_dim'], 1, args)
 model.double().to(device)
 data_train = data_train.to(device)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=args['lr'], weight_decay=args['weight_decay'])
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
-criterion = torch.nn.BCELoss()
-gnn_trainer_gatv2 = GnnTrainer(model)
-gnn_trainer_gatv2.train(data_train, optimizer, criterion, scheduler, args)
+# optimizer = torch.optim.Adam(model.parameters(), lr=args['lr'], weight_decay=args['weight_decay'])
+# scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+# criterion = torch.nn.BCELoss()
+# gnn_trainer_gatv2 = GnnTrainer(model)
+# gnn_trainer_gatv2.train(data_train, optimizer, criterion, scheduler, args)
 
-gnn_trainer_gatv2.save_metrics("", path=FOLDERNAME + "/resultsmetric")
-gnn_trainer_gatv2.save_model("", path=FOLDERNAME + "/resultsmodel")
+# gnn_trainer_gatv2.save_metrics("", path=FOLDERNAME + "/resultsmetric")
+# gnn_trainer_gatv2.save_model("", path=FOLDERNAME + "/resultsmodel")
 
 import networkx as nx
 import matplotlib.pyplot as plt
