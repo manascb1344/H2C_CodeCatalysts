@@ -190,7 +190,7 @@ class MetricManager(object):
 
     return best_results
 
-args={"epochs":100,
+args={"epochs":10,
       'lr':0.01,
       'weight_decay':1e-5,
       'prebuild':True,
@@ -200,7 +200,7 @@ args={"epochs":100,
       }
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+# device = torch.device('cpu')
 net = "GATv2"
 
 if args['prebuild']==True:
@@ -208,10 +208,10 @@ if args['prebuild']==True:
   print("Prebuilt GATv2 from PyG ")
 
 
-model.double().to(device)
+# model.double().to(device)
 
-model = GATv2(data_train.num_node_features, args['hidden_dim'], 1, args)
-model.double().to(device)
+# model = GATv2(data_train.num_node_features, args['hidden_dim'], 1, args)
+# model.double().to(device)
 data_train = data_train.to(device)
 
 # optimizer = torch.optim.Adam(model.parameters(), lr=args['lr'], weight_decay=args['weight_decay'])
@@ -227,129 +227,89 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 m1 = GATv2(data_train.num_node_features, args['hidden_dim'], 1, args).to(device).double()
-# m1.load_state_dict(torch.load(FOLDERNAME + "/resultsmodel"))
-m1.load_state_dict(torch.load("./resultsmodel"))
+m1.load_state_dict(torch.load(FOLDERNAME + "/resultsmodel"))
 gnn_t2 = GnnTrainer(m1)
 output = gnn_t2.predict(data=data_train, unclassified_only=False)
 
 
 
-# time_period = 28
-# sub_node_list = df_merge.index[df_merge.loc[:, 1] == time_period].tolist()
+time_period = 28
+sub_node_list = df_merge.index[df_merge.loc[:, 1] == time_period].tolist()
 
-# edge_tuples = []
-# for row in data_train.cpu().edge_index.view(-1, 2).numpy():
-#   if (row[0] in sub_node_list) | (row[1] in sub_node_list):
-#     edge_tuples.append(tuple(row))
-# len(edge_tuples)
+edge_tuples = []
+for row in data_train.cpu().edge_index.view(-1, 2).numpy():
+  if (row[0] in sub_node_list) | (row[1] in sub_node_list):
+    edge_tuples.append(tuple(row))
+len(edge_tuples)
 
-# node_color = []
-# for node_id in sub_node_list:
-#   if node_id in classified_illicit_idx: #
-#      label = "red" # fraud
-#   elif node_id in classified_licit_idx:
-#      label = "green" # not fraud
-#   else:
-#     if output['pred_labels'][node_id]:
-#       label = "orange" # Predicted fraud
-#     else:
-#       label = "blue" # Not fraud predicted
+node_color = []
+for node_id in sub_node_list:
+  if node_id in classified_illicit_idx: #
+     label = "red" # fraud
+  elif node_id in classified_licit_idx:
+     label = "green" # not fraud
+  else:
+    if output['pred_labels'][node_id]:
+      label = "orange" # Predicted fraud
+    else:
+      label = "blue" # Not fraud predicted
 
-#   node_color.append(label)
+  node_color.append(label)
 
 
-# G = nx.Graph()
-# G.add_edges_from(edge_tuples)
 
-# plt.figure(3,figsize=(16,16))
-# plt.title("Time period:"+str(time_period))
-# nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
-
-# plt.figure(3,figsize=(16,16))
-# plt.title("Time period:"+str(time_period))
-# nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
-# plt.savefig("output_graph.jpeg", format="jpeg")
 
 # plt.show()
 
 
-from flask import Flask, request, jsonify
+import streamlit as st
+import torch
 import networkx as nx
 import matplotlib.pyplot as plt
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-import json
-import numpy as np
+from io import BytesIO
 
-# Initialize Flask app
-app = Flask(__name__)
+# Import your model and necessary functions/classes from the provided code
 
-# Cloudinary configuration
-cloudinary.config( 
-  cloud_name = "df4gpwc0y", 
-  api_key = "568149677141638", 
-  api_secret = "i-ivcnbd_49gWa5ghpAvvQgY9QY" 
-)
-
-# Function to generate the graph and save it with timestep name
-def generate_and_save_graph(time_period, data_train=data_train, df_merge=df_merge, classified_illicit_idx=classified_illicit_idx, classified_licit_idx=classified_licit_idx, output=output):
-    sub_node_list = df_merge.index[df_merge.loc[:, 1] == time_period].tolist()
-
-    edge_tuples = []
-    for row in data_train.cpu().edge_index.view(-1, 2).numpy():
-        if (row[0] in sub_node_list) or (row[1] in sub_node_list):
-            edge_tuples.append(tuple(row))
-
-    node_color = []
-    for node_id in sub_node_list:
-        if node_id in classified_illicit_idx:
-            label = "red"  # fraud
-        elif node_id in classified_licit_idx:
-            label = "green"  # not fraud
-        else:
-            if output['pred_labels'][node_id]:
-                label = "orange"  # Predicted fraud
-            else:
-                label = "blue"  # Not fraud predicted
-        node_color.append(label)
-
+# Define a function to generate and return the graph image
+def generate_graph_image(time_period, sub_node_list, edge_tuples, node_color):
     G = nx.Graph()
     G.add_edges_from(edge_tuples)
 
-    plt.figure(figsize=(16, 16))
-    plt.title("Time period:" + str(time_period))
+    plt.figure(3,figsize=(16,16))
+    plt.title("Time period:"+str(time_period))
     nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
+
+    plt.figure(3,figsize=(16,16))
+    plt.title("Time period:"+str(time_period))
+    img = nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
+    # plt.savefig("output_graph.jpeg", format="jpeg")
+
+    img_bytes = BytesIO()
+    plt.savefig(img_bytes, format='jpeg')
+    img_bytes.seek(0)
+
+    # Clear the figure to release resources
+    plt.clf()
+
+    return img
+
+# Define your Streamlit app
+def main():
+    st.title("Graph Visualization for Time Period")
     
-    plt.plot()
-    # Save the image with timestep name
-    plt.savefig(f"output_graph_timestep_{time_period}.jpeg", format="jpeg")  # Use timestep in filename
+    # Example data (replace with your data)
+    time_period = st.slider("Select Time Period:", min_value=1, max_value=30, value=1, step=1)
+    # Fetch the relevant data based on the selected time period (you need to implement this part)
+    # Example data (replace with your actual data)
+    sub_node_list = [1, 2, 3, 4]  # Example sub node list
+    edge_tuples = [(1, 2), (2, 3), (3, 4)]  # Example edge tuples
+    node_color = ['red', 'green', 'blue', 'orange']  # Example node colors
 
+    # Generate graph image
+    graph_image = generate_graph_image(time_period, sub_node_list, edge_tuples, node_color)
 
+    # Display the graph image
+    st.image(graph_image, caption="Graph Visualization", use_column_width=True)
 
-# API endpoint to receive time period and upload the image to Cloudinary
-@app.route('/upload', methods=['POST'])
-def upload_to_cloudinary():
-    data = request.json
-    time_period = data.get('time_period')  # Extract time period from input data
-    # Generate and save the graph
-    generate_and_save_graph(time_period)
-
-    # Upload the image to Cloudinary
-    cloudinary.uploader.upload(f"output_graph_timestep_{time_period}.jpeg", public_id=f"output_graph_timestep_{time_period}", unique_filename=False, overwrite=True)
-    srcURL = cloudinary.CloudinaryImage(f"output_graph_timestep_{time_period}").build_url()
-
-    # Get asset info
-    image_info = cloudinary.api.resource(f"output_graph_timestep_{time_period}")
-    if image_info["width"] > 900:
-        update_resp = cloudinary.api.update(f"output_graph_timestep_{time_period}", tags="large")
-    elif image_info["width"] > 500:
-        update_resp = cloudinary.api.update(f"output_graph_timestep_{time_period}", tags="medium")
-    else:
-        update_resp = cloudinary.api.update(f"output_graph_timestep_{time_period}", tags="small")
-
-    return jsonify({"srcURL": srcURL, "update_resp": update_resp}), 200
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5050)
+if __name__ == "__main__":
+    main()
