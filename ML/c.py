@@ -227,46 +227,128 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 m1 = GATv2(data_train.num_node_features, args['hidden_dim'], 1, args).to(device).double()
-m1.load_state_dict(torch.load(FOLDERNAME + "/resultsmodel"))
+# m1.load_state_dict(torch.load(FOLDERNAME + "/resultsmodel"))
+m1.load_state_dict(torch.load("resultsmodel"))
 gnn_t2 = GnnTrainer(m1)
 output = gnn_t2.predict(data=data_train, unclassified_only=False)
 
 
 
-time_period = 28
-sub_node_list = df_merge.index[df_merge.loc[:, 1] == time_period].tolist()
+# time_period = 28
+# sub_node_list = df_merge.index[df_merge.loc[:, 1] == time_period].tolist()
 
-edge_tuples = []
-for row in data_train.cpu().edge_index.view(-1, 2).numpy():
-  if (row[0] in sub_node_list) | (row[1] in sub_node_list):
-    edge_tuples.append(tuple(row))
-len(edge_tuples)
+# edge_tuples = []
+# for row in data_train.cpu().edge_index.view(-1, 2).numpy():
+#   if (row[0] in sub_node_list) | (row[1] in sub_node_list):
+#     edge_tuples.append(tuple(row))
+# len(edge_tuples)
 
-node_color = []
-for node_id in sub_node_list:
-  if node_id in classified_illicit_idx: #
-     label = "red" # fraud
-  elif node_id in classified_licit_idx:
-     label = "green" # not fraud
-  else:
-    if output['pred_labels'][node_id]:
-      label = "orange" # Predicted fraud
+# node_color = []
+# for node_id in sub_node_list:
+#   if node_id in classified_illicit_idx: #
+#      label = "red" # fraud
+#   elif node_id in classified_licit_idx:
+#      label = "green" # not fraud
+#   else:
+#     if output['pred_labels'][node_id]:
+#       label = "orange" # Predicted fraud
+#     else:
+#       label = "blue" # Not fraud predicted
+
+#   node_color.append(label)
+
+
+# G = nx.Graph()
+# G.add_edges_from(edge_tuples)
+
+# plt.figure(3,figsize=(16,16))
+# plt.title("Time period:"+str(time_period))
+# nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
+
+# plt.figure(3,figsize=(16,16))
+# plt.title("Time period:"+str(time_period))
+# nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
+# plt.savefig("output_graph.jpeg", format="jpeg")
+
+# plt.show()
+
+
+from flask import Flask, request, jsonify
+import networkx as nx
+import matplotlib.pyplot as plt
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+import json
+import numpy as np
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Cloudinary configuration
+cloudinary.config( 
+  cloud_name = "df4gpwc0y", 
+  api_key = "568149677141638", 
+  api_secret = "i-ivcnbd_49gWa5ghpAvvQgY9QY" 
+)
+
+# Function to generate the graph and save it with timestep name
+def generate_and_save_graph(time_period, data_train, df_merge, classified_illicit_idx, classified_licit_idx, output):
+    sub_node_list = df_merge.index[df_merge.loc[:, 1] == time_period].tolist()
+
+    edge_tuples = []
+    for row in data_train.cpu().edge_index.view(-1, 2).numpy():
+        if (row[0] in sub_node_list) or (row[1] in sub_node_list):
+            edge_tuples.append(tuple(row))
+
+    node_color = []
+    for node_id in sub_node_list:
+        if node_id in classified_illicit_idx:
+            label = "red"  # fraud
+        elif node_id in classified_licit_idx:
+            label = "green"  # not fraud
+        else:
+            if output['pred_labels'][node_id]:
+                label = "orange"  # Predicted fraud
+            else:
+                label = "blue"  # Not fraud predicted
+        node_color.append(label)
+
+    G = nx.Graph()
+    G.add_edges_from(edge_tuples)
+
+    plt.figure(figsize=(16, 16))
+    plt.title("Time period:" + str(time_period))
+    nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
+    
+    # Save the image with timestep name
+    plt.savefig(f"output_graph_timestep_{time_period}.jpeg", format="jpeg")  # Use timestep in filename
+
+
+
+# API endpoint to receive time period and upload the image to Cloudinary
+@app.route('/upload', methods=['POST'])
+def upload_to_cloudinary():
+    data = request.json
+    time_period = data.get('time_period')  # Extract time period from input data
+    # Generate and save the graph
+    generate_and_save_graph(time_period, data_train, df_merge, classified_illicit_idx, classified_licit_idx, output)
+
+    # Upload the image to Cloudinary
+    cloudinary.uploader.upload(f"output_graph_timestep_{time_period}.jpeg", public_id=f"output_graph_timestep_{time_period}", unique_filename=False, overwrite=True)
+    srcURL = cloudinary.CloudinaryImage(f"output_graph_timestep_{time_period}").build_url()
+
+    # Get asset info
+    image_info = cloudinary.api.resource(f"output_graph_timestep_{time_period}")
+    if image_info["width"] > 900:
+        update_resp = cloudinary.api.update(f"output_graph_timestep_{time_period}", tags="large")
+    elif image_info["width"] > 500:
+        update_resp = cloudinary.api.update(f"output_graph_timestep_{time_period}", tags="medium")
     else:
-      label = "blue" # Not fraud predicted
+        update_resp = cloudinary.api.update(f"output_graph_timestep_{time_period}", tags="small")
 
-  node_color.append(label)
+    return jsonify({"srcURL": srcURL, "update_resp": update_resp}), 200
 
 
-G = nx.Graph()
-G.add_edges_from(edge_tuples)
-
-plt.figure(3,figsize=(16,16))
-plt.title("Time period:"+str(time_period))
-nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
-
-plt.figure(3,figsize=(16,16))
-plt.title("Time period:"+str(time_period))
-nx.draw_networkx(G, nodelist=sub_node_list, node_color=node_color, node_size=6, with_labels=False)
-plt.savefig("output_graph.jpeg", format="jpeg")
-
-plt.show()
+if __name__ == '__main__':
+    app.run(debug=True, port=5050)
